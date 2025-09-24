@@ -1,0 +1,46 @@
+name: Auto Versioning CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  version-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Setup Git config
+      run: |
+        git config user.name "CI Bot"
+        git config user.email "ci-bot@users.noreply.github.com"
+
+    - name: Read current version
+      id: version
+      run: |
+        CURRENT_VERSION=$(cat version.txt | sed 's/v//')
+        echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Increment version
+      id: increment
+      run: |
+        IFS='.' read -ra VERSION_PARTS <<< "${{ steps.version.outputs.current_version }}"
+        MAJOR=${VERSION_PARTS[0]}
+        MINOR=${VERSION_PARTS[1]}
+        PATCH=${VERSION_PARTS[2]}
+        
+        NEW_PATCH=$((PATCH + 1))
+        NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+        echo $NEW_VERSION > version.txt
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Commit version update
+      run: |
+        git add version.txt
+        git commit -m "CI: Auto-increment version to ${{ steps.increment.outputs.new_version }}"
+        git push
