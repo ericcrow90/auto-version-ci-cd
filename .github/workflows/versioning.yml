@@ -8,9 +8,11 @@ jobs:
   version-update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Update version
         run: |
           git config user.name "github-actions[bot]"
@@ -20,4 +22,4 @@ jobs:
           echo $new_version > version.txt
           git add version.txt
           git commit -m "ci: auto update version to $new_version"
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
