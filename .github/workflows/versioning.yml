@@ -10,16 +10,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Update version
+        
+      - name: Display current version
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          current=$(cat version.txt)
-          new_version=$(echo $current | awk -F. '{$NF+=1; OFS="."; print $0}')
-          echo $new_version > version.txt
-          git add version.txt
-          git commit -m "ci: auto update version to $new_version"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+          echo "Current version: $(cat version.txt)"
+          current=$(cat version.txt | sed 's/v//')
+          IFS='.' read -r major minor patch <<< "$current"
+          new_patch=$((patch + 1))
+          new_version="v${major}.${minor}.${new_patch}"
+          echo "Next version would be: $new_version"
+          echo "::set-output name=new_version::$new_version"
